@@ -28,7 +28,7 @@ function App() {
         setSudokuData(newSudokuData);
         setInitialValues(newSudokuData.map(row => row.map(cell => cell !== '')));
         setSudokuSolution(newSudokuSolution);
-        setHistory([]); 
+        setHistory([]); // Reset history when a new game is fetched
       }
     } catch (error) {
       console.error('Error fetching Sudoku data:', error);
@@ -69,7 +69,7 @@ function App() {
       setSudokuData(lastState);
       setHistory([...history]);
     }
-  }; 
+  };
 
   const handleHint = () => {
     saveHistory();
@@ -156,18 +156,24 @@ function App() {
           </div>
         </div>
         <div className="sudoku-container">
+          
           <div className="sudoku-board">{renderBoard()}</div>
-          <div className="number-buttons">
+          <div className='sudoku-inputs'>
+            <div className="number-buttons">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                 <button key={num} onClick={() => handleNumberClick(num)}>{num}</button>
               ))}
             </div>
-          <div className="sudoku-controls">
-            <button onClick={handleUndo}>Undo</button>
-            <button onClick={handleHint}>Hint</button>
-            
-            <button className="new-game-button" onClick={() => fetchSudokuData(difficulty)}>New Game</button>
-            <button className="submit-button" onClick={handleSubmit}>Submit</button>
+            <div className="sudoku-controls">
+              <div className="sudoku-controls-row">
+                <button onClick={handleUndo}>Undo</button>
+                <button onClick={handleHint}>Hint</button>
+              </div>
+              <div className="sudoku-controls-row">
+                <button className="new-game-button" onClick={() => fetchSudokuData(difficulty)}>New Game</button>
+                <button className="submit-button" onClick={handleSubmit}>Submit</button>
+              </div>
+          </div>
           </div>
         </div>
       </header>
