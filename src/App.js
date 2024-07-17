@@ -6,6 +6,8 @@ function App() {
   const [initialValues, setInitialValues] = useState(Array(9).fill('').map(() => Array(9).fill(false)));
   const [difficulty, setDifficulty] = useState('easy');
   const [sudokuSolution, setSudokuSolution] = useState(Array(9).fill('').map(() => Array(9).fill('')));
+  const [history, setHistory] = useState([]); // Stack to store previous states
+  const [selectedCell, setSelectedCell] = useState([null, null]); // Track selected cell
 
   useEffect(() => {
     fetchSudokuData(difficulty);
@@ -26,6 +28,7 @@ function App() {
         setSudokuData(newSudokuData);
         setInitialValues(newSudokuData.map(row => row.map(cell => cell !== '')));
         setSudokuSolution(newSudokuSolution);
+        setHistory([]); 
       }
     } catch (error) {
       console.error('Error fetching Sudoku data:', error);
@@ -35,9 +38,50 @@ function App() {
   const handleInputChange = (e, i, j) => {
     const { value } = e.target;
     if (value.match(/^[1-9]$/) || value === '') {
+      saveHistory();
       const newSudokuData = [...sudokuData];
       newSudokuData[i][j] = value;
       setSudokuData(newSudokuData);
+    }
+  };
+
+  const handleNumberClick = (num) => {
+    const [i, j] = selectedCell;
+    if (i !== null && j !== null && !initialValues[i][j]) {
+      saveHistory();
+      const newSudokuData = [...sudokuData];
+      newSudokuData[i][j] = num.toString();
+      setSudokuData(newSudokuData);
+    }
+  };
+
+  const handleCellClick = (i, j) => {
+    setSelectedCell([i, j]);
+  };
+
+  const saveHistory = () => {
+    setHistory([...history, sudokuData.map(row => row.slice())]);
+  };
+
+  const handleUndo = () => {
+    if (history.length > 0) {
+      const lastState = history.pop();
+      setSudokuData(lastState);
+      setHistory([...history]);
+    }
+  }; 
+
+  const handleHint = () => {
+    saveHistory();
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        if (sudokuData[i][j] === '') {
+          const newSudokuData = [...sudokuData];
+          newSudokuData[i][j] = sudokuSolution[i][j];
+          setSudokuData(newSudokuData);
+          return;
+        }
+      }
     }
   };
 
@@ -62,10 +106,11 @@ function App() {
       <input
         type="text"
         maxLength="1"
-        className="sudoku-input"
+        className={`sudoku-input ${selectedCell[0] === i && selectedCell[1] === j ? 'selected' : ''}`}
         key={`${i}-${j}`}
         value={sudokuData[i][j] || ''}
         onChange={(e) => handleInputChange(e, i, j)}
+        onClick={() => handleCellClick(i, j)}
         readOnly={initialValues[i][j]}
       />
     );
@@ -104,7 +149,6 @@ function App() {
       <header className="App-header">
         <div className="sudoku-header">
           <div className="difficulty">
-            Difficulty:
             <button onClick={() => setDifficulty('easy')}>Easy</button>
             <button onClick={() => setDifficulty('medium')}>Medium</button>
             <button onClick={() => setDifficulty('expert')}>Expert</button>
@@ -113,16 +157,15 @@ function App() {
         </div>
         <div className="sudoku-container">
           <div className="sudoku-board">{renderBoard()}</div>
-          <div className="sudoku-controls">
-            <button>Undo</button>
-            <button>Erase</button>
-            <button>Notes</button>
-            <button>Hint</button>
-            <div className="number-buttons">
+          <div className="number-buttons">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                <button key={num}>{num}</button>
+                <button key={num} onClick={() => handleNumberClick(num)}>{num}</button>
               ))}
             </div>
+          <div className="sudoku-controls">
+            <button onClick={handleUndo}>Undo</button>
+            <button onClick={handleHint}>Hint</button>
+            
             <button className="new-game-button" onClick={() => fetchSudokuData(difficulty)}>New Game</button>
             <button className="submit-button" onClick={handleSubmit}>Submit</button>
           </div>
