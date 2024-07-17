@@ -1,0 +1,66 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #23d48d;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.sudoku-board {
+  display: grid;
+  grid-template-columns: repeat(9, 40px);
+  grid-gap: 0;
+  border: 3px solid white;
+  background-color: white;
+}
+
+.sudoku-row {
+  display: contents;
+}
+
+.sudoku-input {
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  font-size: 20px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+.sudoku-input:focus {
+  outline: none;
+  border: 2px solid #61fb8f;
+}
+
+.sudoku-input:nth-child(3n) {
+  border-right: 2px solid #282c34;
+}
+
+.sudoku-input:nth-child(3n + 1) {
+  border-left: 2px solid #282c34;
+}
+
+.sudoku-row:nth-child(3n) .sudoku-input {
+  border-bottom: 2px solid #282c34;
+}
+
+.sudoku-row:nth-child(3n + 1) .sudoku-input {
+  border-top: 2px solid #282c34;
+}
+
+
+/* .sudoku-row:nth-child(1) .sudoku-input, */
+.sudoku-row:nth-child(2) .sudoku-input,
+.sudoku-row:nth-child(4) .sudoku-input,
+.sudoku-row:nth-child(5) .sudoku-input,
+.sudoku-row:nth-child(7) .sudoku-input,
+.sudoku-row:nth-child(8) .sudoku-input {
+  border-top: 2px solid transparent;
+}
