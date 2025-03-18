@@ -19,9 +19,11 @@ function App() {
 
   const fetchSudokuData = async (difficulty) => {
     try {
+      const apiKey = '123'; // Replace with your actual API key
       const response = await fetch(`https://sudoku-be-m6nr.onrender.com/api/v1/sudoku?difficulty=${difficulty}`, {
         headers: {
-          'Authorization': 'Bearer 123'
+          'Authorization': `Bearer ${apiKey}`,
+          'X-API-KEY': apiKey
         }
       });
       const data = await response.json();
