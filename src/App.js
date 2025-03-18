@@ -19,7 +19,11 @@ function App() {
 
   const fetchSudokuData = async (difficulty) => {
     try {
-      const response = await fetch(`https://sudoku-be-m6nr.onrender.com/api/v1/sudoku?difficulty=${difficulty}`);
+      const response = await fetch(`https://sudoku-be-m6nr.onrender.com/api/v1/sudoku?difficulty=${difficulty}`, {
+        headers: {
+          'Authorization': 'Bearer 123'
+        }
+      });
       const data = await response.json();
       console.log(data);
       if (data && data['puzzle']) {
