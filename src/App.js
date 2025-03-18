@@ -19,7 +19,7 @@ function App() {
 
   const fetchSudokuData = async (difficulty) => {
     try {
-      const response = await fetch(`http://0.0.0.0:8000/api/v1/sudoku?difficulty=${difficulty}`);
+      const response = await fetch(`https://sudoku-be-m6nr.onrender.com/api/v1/sudoku?difficulty=${difficulty}`);
       const data = await response.json();
       console.log(data);
       if (data && data['puzzle']) {
@@ -28,7 +28,7 @@ function App() {
         setSudokuData(newSudokuData);
         setInitialValues(newSudokuData.map(row => row.map(cell => cell !== '')));
         setSudokuSolution(newSudokuSolution);
-        setHistory([]); // Reset history when a new game is fetched
+        setHistory([]);
       }
     } catch (error) {
       console.error('Error fetching Sudoku data:', error);
