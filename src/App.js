@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './App.css';
 
 function App() {
@@ -8,15 +8,110 @@ function App() {
   const [sudokuSolution, setSudokuSolution] = useState(Array(9).fill(null).map(() => Array(9).fill('')));
   const [history, setHistory] = useState([]);
   const [selectedCell, setSelectedCell] = useState([null, null]);
+  const playerId = 10;
+  const sudokuId = 1;
+
+  const startTimeRef = useRef(null);
+const [elapsedTime, setElapsedTime] = useState(0);
+const [intervalId, setIntervalId] = useState(null);
+
 
   useEffect(() => {
     fetchSudokuData(difficulty);
   }, [difficulty]);
 
+  // const apiCall = async (endpoint) => {
+  //   try {
+  //     const apiKey = '123';
+  //     const response = await fetch(`http://0.0.0.0:8000/api/v1/${endpoint}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${apiKey}`,
+  //         'X-API-KEY': apiKey
+  //       }
+  //     });
+  //     const data = await response.json();
+  //     return data;
+  //   } catch (error) {
+  //     console.error('Error making API call:', error);
+  //   }
+  // };
+  
+  const handleUndo = async () => {
+    //  await apiCall('undo');
+    if (history.length > 0) {
+      setSudokuData(history[history.length - 1]);
+      setHistory(prevHistory => prevHistory.slice(0, -1));
+    }
+  };
+  
+  const handleHint = async () => {
+    saveHistory();
+    setSudokuData(prevSudoku => {
+      const newSudoku = prevSudoku.map(row => [...row]);
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          if (newSudoku[i][j] === '') {
+            newSudoku[i][j] = sudokuSolution[i][j];
+            return newSudoku;
+          }
+        }
+      }
+      return newSudoku;
+    });
+  };
+  
+  const handleSubmit = async () => {
+    if (!validateSudoku()) {
+      alert('Some values are incorrect. Please try again.');
+      return;
+    }
+  
+    if (intervalId) clearInterval(intervalId); 
+  
+    alert('Congratulations! You solved the puzzle!');
+    const solveTime = elapsedTime;
+
+  
+    try {
+      const apiKey = '123';
+      const response = await fetch(`http://0.0.0.0:8000/api/v1/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'X-API-KEY': apiKey
+        },
+        body: JSON.stringify({ player_id: playerId, sudoku_id: sudokuId, solve_time: solveTime })
+      });
+      // console.log(JSON.stringify({ player_id: playerId, sudoku_id: sudokuId, solve_time: solveTime }))
+  
+      const data = await response.json();
+      console.log('Submission response:', data);
+      return data;
+    } catch (error) {
+      console.error('Error making API call:', error);
+    }
+  };
+  
+  const renderSquare = (i, j) => (
+    <input
+      type="text"
+      maxLength="1"
+      className={`sudoku-input ${selectedCell[0] === i && selectedCell[1] === j ? 'selected' : ''}`}
+      key={`${i}-${j}`}
+      value={sudokuData[i][j] || ''}
+      onChange={(e) => handleInputChange(e, i, j)}
+      onClick={() => handleCellClick(i, j)}
+      readOnly={initialValues[i][j]} // Read-only for pre-filled values
+      style={{ fontWeight: initialValues[i][j] ? 'bold' : 'normal' }} // Bold for initial values
+    />
+  );
+
   const fetchSudokuData = async (difficulty) => {
     try {
-      const apiKey = '123'; // Replace with actual API key
-      const response = await fetch(`https://sudoku-be-m6nr.onrender.com/api/v1/sudoku?player_id=3&difficulty=${difficulty}`, {
+
+      const apiKey = '123'; 
+      const response = await fetch(`http://0.0.0.0:8000/api/v1/sudoku?player_id=1&difficulty=${difficulty}`, {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'X-API-KEY': apiKey
@@ -32,6 +127,18 @@ function App() {
         setInitialValues(newSudokuData.map(row => row.map(cell => cell !== ''))); // Cells with numbers should be immutable
         setSudokuSolution(newSudokuSolution);
         setHistory([]);
+        setElapsedTime(0);
+        startTimeRef.current = Date.now();
+
+        if (intervalId) clearInterval(intervalId);
+
+        const newIntervalId = setInterval(() => {
+          const now = Date.now();
+          const elapsed = Math.floor((now - startTimeRef.current) / 1000);
+          setElapsedTime(elapsed);
+        }, 1000);
+
+        setIntervalId(newIntervalId);
       }
     } catch (error) {
       console.error('Error fetching Sudoku data:', error);
@@ -72,28 +179,6 @@ function App() {
     setHistory(prevHistory => [...prevHistory, sudokuData.map(row => [...row])]);
   };
 
-  const handleUndo = () => {
-    if (history.length > 0) {
-      setSudokuData(history[history.length - 1]);
-      setHistory(prevHistory => prevHistory.slice(0, -1));
-    }
-  };
-
-  const handleHint = () => {
-    saveHistory();
-    setSudokuData(prevSudoku => {
-      const newSudoku = prevSudoku.map(row => [...row]);
-      for (let i = 0; i < 9; i++) {
-        for (let j = 0; j < 9; j++) {
-          if (newSudoku[i][j] === '') {
-            newSudoku[i][j] = sudokuSolution[i][j];
-            return newSudoku;
-          }
-        }
-      }
-      return newSudoku;
-    });
-  };
 
   const validateSudoku = () => {
     for (let i = 0; i < 9; i++) {
@@ -106,19 +191,6 @@ function App() {
     return true;
   };
 
-  const renderSquare = (i, j) => (
-    <input
-      type="text"
-      maxLength="1"
-      className={`sudoku-input ${selectedCell[0] === i && selectedCell[1] === j ? 'selected' : ''}`}
-      key={`${i}-${j}`}
-      value={sudokuData[i][j] || ''}
-      onChange={(e) => handleInputChange(e, i, j)}
-      onClick={() => handleCellClick(i, j)}
-      readOnly={initialValues[i][j]} // Read-only for pre-filled values
-    />
-  );
-
   const renderRow = (i) => (
     <div className="sudoku-row" key={i}>
       {Array.from({ length: 9 }, (_, j) => renderSquare(i, j))}
@@ -127,13 +199,13 @@ function App() {
 
   const renderBoard = () => Array.from({ length: 9 }, (_, i) => renderRow(i));
 
-  const handleSubmit = () => {
-    alert(validateSudoku() ? 'Congratulations! You solved the puzzle!' : 'Some values are incorrect. Please try again.');
-  };
-
   return (
     <div className="App">
       <header className="App-header">
+      <div className="timer">
+        {Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}
+      </div>
+
         <div className="sudoku-header">
           <div className="difficulty">
             {['easy', 'medium', 'expert', 'extreme'].map(level => (
@@ -156,7 +228,7 @@ function App() {
               </div>
               <div className="sudoku-controls-row">
                 <button className="new-game-button" onClick={() => fetchSudokuData(difficulty)}>New Game</button>
-                <button className="submit-button" onClick={handleSubmit}>Submit</button>
+                <button className="submit-button" onClick={() => handleSubmit()}>Submit</button>
               </div>
             </div>
           </div>
